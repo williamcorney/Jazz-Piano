@@ -2,16 +2,22 @@ import sys,mido,json,random,os
 from PyQt6.QtWidgets import QApplication, QMainWindow, QListWidget, QVBoxLayout, QWidget, QHBoxLayout, QPushButton,QLabel,QGraphicsScene, QGraphicsPixmapItem, QGraphicsView
 from PyQt6.QtGui import QPixmap, QFont,QIcon
 from PyQt6.QtCore import Qt, pyqtSignal,QTimer
-from playsound3 import playsound
+import pygame
 import threading
 #TODO :SOUND
 #TODO :SCORE
 #TODO: ECONOMISE THE CODE WHERE POSSIBLE
+
+pygame.init()
+pygame.mixer.init()
+
+
 class MainApp(QMainWindow):
     note_on_signal = pyqtSignal(int, str)
     note_off_signal = pyqtSignal(int)
     def __init__(self):
         super().__init__()
+
         self.setStyleSheet("background-color: darkgreen;")
         self.theory1,self.theory2,self.theory3,self.theory4 ,self.last_selected_scale, self.last_selected_note = None,None,None,None,None,None
         self.setWindowTitle('Note Handler')
@@ -259,7 +265,9 @@ class MainApp(QMainWindow):
             match self.theory1:
                 case 'Notes':
                     if message.note == self.required_notes:
-                        self.play_sound_in_background('correct.mp3')
+                        pygame.mixer.music.load("correct.mp3")
+                        pygame.mixer.music.play()
+                        pygame.mixer.music.set_volume(0.2)
 
                         self.note_on_signal.emit(message.note, "green")
                         self.choose_mode()
@@ -274,14 +282,18 @@ class MainApp(QMainWindow):
                         self.scale_degree_number += 1
                         if self.scale_degree_number == len(self.required_notes):
                             self.scale_degree_number = 0
-                            self.play_sound_in_background('correct.mp3')
+                            pygame.mixer.music.load("correct.mp3")
+                            pygame.mixer.music.play()
+                            pygame.mixer.music.set_volume(0.2)
                             self.choose_mode()
                     else:
                         if message.note == self.required_notes[0]:
                             self.scale_degree_number = 1
                             self.note_on_signal.emit(message.note, "green")
                         else:
-                            self.play_sound_in_background('incorrect.mp3')
+                            pygame.mixer.music.load("incorrect.mp3")
+                            pygame.mixer.music.play()
+                            pygame.mixer.music.set_volume(0.2)
                             self.scale_degree_number = 0
                             self.note_on_signal.emit(message.note, "red")
                 case 'Chords':
@@ -290,7 +302,9 @@ class MainApp(QMainWindow):
                         self.pressed_notes.append(message.note)
 
                         if len(self.pressed_notes) >= len(self.required_notes):
-                            self.play_sound_in_background('correct.mp3')
+                            pygame.mixer.music.load("correct.mp3")
+                            pygame.mixer.music.play()
+                            pygame.mixer.music.set_volume(0.2)
                             self.choose_mode()
                     else:
                         self.note_on_signal.emit(message.note, "red")
