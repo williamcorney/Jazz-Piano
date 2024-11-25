@@ -210,10 +210,13 @@ class MainApp(QMainWindow):
                 intervals = self.Theory['Scales'][self.theory2][selected_scale]
                 self.circledegree = (self.circledegree + 1) % 12
                 self.label1.setText(selected_scale)
+                pygame.mixer.music.load(f"./Sounds/{selected_scale}.mp3")
+                pygame.mixer.music.play()
+                pygame.mixer.music.set_volume(0.5)
                 self.label2.setText(", ".join(map(str, self.Theory['Theory'][selected_scale])))
                 self.label3.setText(
                     ", ".join(map(str, self.Theory['Fingering'][self.theory2][selected_scale]['Right'])))
-                self.required_notes = self.extend_scale(intervals, 1, 60, descending=True)
+                self.required_notes = self.extend_scale(intervals, 2, 60, descending=True)
 
     def handle_chords_case(self):
         selected_scale = self.Theory["Circle"][self.theory1][self.theory2][self.theory3][self.circledegree]
@@ -310,16 +313,23 @@ class MainApp(QMainWindow):
                         self.note_on_signal.emit(message.note, "red")
                 case _:
                     self.note_on_signal.emit(message.note, "red")
-    def extend_scale(self, intervals, num_octaves, root_note=60, descending=False):
 
+    def extend_scale(self,intervals, num_octaves, root_note=60, repeated_root=False, descending=True):
         midi_notes = []
         intervals = [int(interval) for interval in intervals]
-        for octave in range(num_octaves): midi_notes += [root_note + interval + 12 * octave for interval in intervals]
+        for octave in range(num_octaves):
+            if octave > 0 and not repeated_root:
+                ascending_notes = [root_note + interval + 12 * octave for interval in intervals[1:]]
+            else:
+                ascending_notes = [root_note + interval + 12 * octave for interval in intervals]
+            midi_notes += ascending_notes
         if descending:
-            descending_notes = []
-            for octave in reversed(range(num_octaves)):descending_notes += [root_note + interval + 12 * octave for interval in reversed(intervals[:-1])]
+            descending_notes = midi_notes[:-1][
+                               ::-1]  # Reverse ascending notes, excluding the last note (root duplication)
+
             midi_notes += descending_notes
         return midi_notes
+
     def insert_note(self, note, color):
         self.xcord = self.Theory["NoteCoordinates"][note % 12] + ((note // 12) - 4) * 239
         self.pixmap_item[note] = QGraphicsPixmapItem(QPixmap("key_" + color + self.Theory["NoteFilenames"][note % 12]))
